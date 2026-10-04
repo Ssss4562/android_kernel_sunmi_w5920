@@ -1964,32 +1964,14 @@ static void Ext_Speaker_Amp_Change(bool enable)
 
 	if (enable) {
 		pr_warn("Ext_Speaker_Amp_Change ON+\n");
-#ifndef CONFIG_MTK_SPEAKER
-		pr_warn("Ext_Speaker_Amp_Change ON set GPIO\n");
-		mt_set_gpio_mode(GPIO_EXT_SPKAMP_EN_PIN, GPIO_MODE_00);	/* GPIO117: DPI_D3, mode 0 */
-		mt_set_gpio_pull_enable(GPIO_EXT_SPKAMP_EN_PIN, GPIO_PULL_ENABLE);
-		mt_set_gpio_dir(GPIO_EXT_SPKAMP_EN_PIN, GPIO_DIR_OUT);	/* output */
-		mt_set_gpio_out(GPIO_EXT_SPKAMP_EN_PIN, GPIO_OUT_ZERO);	/* low disable */
-		udelay(1000);
-		mt_set_gpio_dir(GPIO_EXT_SPKAMP_EN_PIN, GPIO_DIR_OUT);	/* output */
-
-#ifdef AW8736_MODE_CTRL
-		AW8736_MODE3;
-#else
-		mt_set_gpio_out(GPIO_EXT_SPKAMP_EN_PIN, GPIO_OUT_ONE);	/* high enable */
-#endif
-		/* msleep(SPK_WARM_UP_TIME); */
+		/* w5920: enable external speaker amp (GPIO19) via pinctrl */
+		AudDrv_GPIO_EXTAMP_Select(true);
 		mdelay(SPK_WARM_UP_TIME);
-#endif
 		pr_warn("Ext_Speaker_Amp_Change ON-\n");
 	} else {
 		pr_warn("Ext_Speaker_Amp_Change OFF+\n");
-#ifndef CONFIG_MTK_SPEAKER
-		/* mt_set_gpio_mode(GPIO_EXT_SPKAMP_EN_PIN, GPIO_MODE_00); //GPIO117: DPI_D3, mode 0 */
-		mt_set_gpio_dir(GPIO_EXT_SPKAMP_EN_PIN, GPIO_DIR_OUT);	/* output */
-		mt_set_gpio_out(GPIO_EXT_SPKAMP_EN_PIN, GPIO_OUT_ZERO);	/* low disbale */
-		udelay(500);
-#endif
+		/* w5920: disable external speaker amp (GPIO19) */
+		AudDrv_GPIO_EXTAMP_Select(false);
 		pr_warn("Ext_Speaker_Amp_Change OFF-\n");
 	}
 }
@@ -2008,12 +1990,17 @@ static int Ext_Speaker_Amp_Set(struct snd_kcontrol *kcontrol, struct snd_ctl_ele
 
 	pr_warn("%s() gain = %ld\n ", __func__, ucontrol->value.integer.value[0]);
 	if (ucontrol->value.integer.value[0]) {
+		/* w5920: make sure the external speaker amp (GPIO19) is
+		 * enabled — do it here explicitly. */
+		AudDrv_GPIO_EXTAMP_Select(true);
 		Ext_Speaker_Amp_Change(true);
 		mCodec_data->mAudio_Ana_DevicePower[AUDIO_ANALOG_DEVICE_OUT_EXTSPKAMP] =
 		    ucontrol->value.integer.value[0];
 	} else {
 		mCodec_data->mAudio_Ana_DevicePower[AUDIO_ANALOG_DEVICE_OUT_EXTSPKAMP] =
 		    ucontrol->value.integer.value[0];
+		/* w5920: disable external speaker amp (GPIO19). */
+		AudDrv_GPIO_EXTAMP_Select(false);
 		Ext_Speaker_Amp_Change(false);
 	}
 	return 0;
