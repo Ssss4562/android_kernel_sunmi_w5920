@@ -10,6 +10,7 @@ extern LCM_DRIVER nt35521_dsi_vdo_yushun_cmi_hd720_lcm_drv;
 extern LCM_DRIVER ili9881c_dsi_vdo_3lanes_tcl_lcm_drv;
 extern LCM_DRIVER ili9881c_dsi_vdo_3lanes_dj_lcm_drv;
 extern LCM_DRIVER ili9881c_hd_dsi_vdo_3lanes_dj_lcm_drv;
+extern LCM_DRIVER xc_ili9881c_dsi_vdo_dijing_2_lcm_drv;
 extern LCM_DRIVER ili9881c_hd_dsi_vdo_3lanes_txd_lcm_drv;
 extern LCM_DRIVER hx8394f_hd_dsi_vdo_3lanes_txd_lcm_drv;
 extern LCM_DRIVER hx8394f_hd4200_dsi_vdo_3lanes_txd_lcm_drv;
