@@ -157,4 +157,11 @@ config TOUCHSCREEN_MTK_FT5X0X
 
 source "drivers/input/touchscreen/mediatek/ft5x0x/Kconfig"
 
+config TOUCHSCREEN_MTK_MSG2XXX
+	bool "MSG2XXX (MStar) for Mediatek package"
+	default n
+	help
+	  Say Y here if you have MStar MSG2xxx touch panel
+	  (Sunmi V1s-G uses MSG2xxx on i2c-1, addr 0x5D).
+
 endif

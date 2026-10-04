@@ -979,7 +979,25 @@ static s32 mt_i2c_start_xfer(struct mt_i2c_t *i2c, struct mt_i2c_msg *msg)
 		goto err;
 	}
 	/* start=========================translate msg to mt_i2c=============================== */
-	_i2c_translate_msg(i2c, msg);
+	/* w5920: auto-DMA for transfers exceeding the 8-byte FIFO.
+	 * Standard i2c_msg callers (i2c_master_send/recv) cannot set
+	 * ext_flag, so without this every >8B transfer fails with EINVAL.
+	 * Mirrors the non-EXTENSION path using the controller DMA buffer. */
+	{
+		struct mt_i2c_msg xmsg = *msg;
+		u8 *dma_tmp = NULL;
+		bool dma_copy = false;
+
+		if (!(xmsg.ext_flag & I2C_DMA_FLAG) && xmsg.len > I2C_FIFO_SIZE &&
+		    xmsg.len <= MAX_DMA_TRANS_NUM) {
+			dma_copy = true;
+			dma_tmp = xmsg.buf;
+			xmsg.ext_flag |= I2C_DMA_FLAG;
+			if (!(xmsg.flags & I2C_M_RD))
+				memcpy(i2c->dma_buf.vaddr, xmsg.buf, xmsg.len);
+			xmsg.buf = (u8 *)i2c->dma_buf.paddr;
+		}
+		_i2c_translate_msg(i2c, &xmsg);
 #ifdef I2C_DRIVER_IN_KERNEL
 	/*This is only for 3D CAMERA. Save address information for 3d camera */
 	if (i2c->i2c_3dcamera_flag) {
@@ -992,6 +1010,9 @@ static s32 mt_i2c_start_xfer(struct mt_i2c_t *i2c, struct mt_i2c_msg *msg)
 	/* end=========================translate msg to mt_i2c=============================== */
 	mt_i2c_clock_enable(i2c);
 	return_value = _i2c_transfer_interface(i2c);
+	if (dma_copy && return_value >= 0 && (xmsg.flags & I2C_M_RD))
+		memcpy(dma_tmp, i2c->dma_buf.vaddr, xmsg.len);
+	} /* w5920 auto-DMA block */
 	if (!(msg->ext_flag & I2C_3DCAMERA_FLAG))
 		mt_i2c_clock_disable(i2c);
 	if (return_value < 0) {
