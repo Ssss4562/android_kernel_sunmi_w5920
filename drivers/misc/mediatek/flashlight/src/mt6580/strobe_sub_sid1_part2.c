@@ -90,3 +90,13 @@ MUINT32 strobeInit_sub_sid1_part2(PFLASHLIGHT_FUNCTION_STRUCT *pfFunc)
 		*pfFunc = &strobeFunc;
 	return 0;
 }
+
+/* w5920: strobe_sub_sid1_part1.c is missing in this tree, but
+ * kd_flashlightlist.c references subStrobeInit for the sub sensor.
+ * Stub it to the part2 ops so the link succeeds. */
+MUINT32 subStrobeInit(PFLASHLIGHT_FUNCTION_STRUCT *pfFunc)
+{
+	if (pfFunc != NULL)
+		*pfFunc = &strobeFunc;
+	return 0;
+}
